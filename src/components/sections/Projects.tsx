@@ -440,7 +440,7 @@ export function Projects() {
             </h3>
             <ul
               aria-label={t.moreLabel}
-              className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5"
+              className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 md:[&>li:last-child:nth-child(odd)]:col-span-2"
             >
               {more.map((project) => (
                 <CompactCard key={project.id} project={project} />

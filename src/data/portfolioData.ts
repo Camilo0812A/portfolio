@@ -164,18 +164,6 @@ export const portfolioData: PortfolioData = {
       year: 2026,
     },
     {
-      id: 'taller-crud-react',
-      title: 'Mis tareas · CRUD en React',
-      description:
-        'Lista de tareas con CRUD completo, componentes y props; guarda en localStorage.',
-      tech: ['React', 'Vite', 'CSS'],
-      repoUrl: 'https://github.com/Camilo0812A/taller-crud-react',
-      liveUrl: 'https://camilo0812a.github.io/taller-crud-react/',
-      image: '/images/projects/taller-crud-react.webp',
-      featured: false,
-      year: 2026,
-    },
-    {
       id: 'bitacora-dev',
       title: 'Bitácora Dev',
       description:
