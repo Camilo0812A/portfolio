@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0b0907;
+  --color-bg-soft: #110e0b;
+  --color-surface: #16120f;
+  --color-surface-2: #1d1814;
+  --color-border: rgb(237 230 216 / 0.08);
+  --color-text: #ede6d8;
+  --color-muted: #a39b8f;
+  --color-faint: #5c554c;
+  --color-accent: #b4232a;
+  --color-accent-soft: #e0575d;
+  --color-gold: #c8a24a;
+
+  --font-display: "Archivo", system-ui, sans-serif;
+  --font-serif: "Instrument Serif", serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --radius-card: 1.75rem;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background-color: var(--color-bg);
+  }
+
+  body {
+    @apply bg-bg text-text font-sans antialiased;
+  }
+}
+
+/* Degradado metálico vertical para titulares gigantes */
+.text-gradient-metal {
+  background-image: linear-gradient(to bottom, #ede6d8 0%, #5c554c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Degradado "brasa": hueso -> carmesí claro */
+.text-gradient-ember {
+  background-image: linear-gradient(to bottom, #ede6d8 0%, #e0575d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Resplandor tenue carmesí + dorado en una esquina */
+.glow-corner {
+  position: relative;
+  isolation: isolate;
+}
+.glow-corner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgb(180 35 42 / 0.16),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 100% 0%,
+      rgb(200 162 74 / 0.08),
+      transparent 45%
+    );
+}
+
+/* Textura de lienzo: ruido SVG inline, opacidad ~0.06 */
+.grain {
+  position: relative;
+  isolation: isolate;
+}
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-size: 180px 180px;
+}
+
+/* Accesibilidad: reduce animaciones si el usuario lo pide */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
