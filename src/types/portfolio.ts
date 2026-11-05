@@ -44,6 +44,11 @@ export interface Project {
   featured: boolean
   isPrivate?: boolean
   year?: number
+  tagline?: string
+  problem?: string
+  solution?: string
+  highlights?: string[]
+  role?: string
 }
 
 export interface Service {
@@ -100,6 +105,20 @@ export interface Profile {
   available: boolean
 }
 
+export interface UiLabels {
+  heroEyebrow: string
+  heroAlt: string
+  ctaProjects: string
+  ctaContact: string
+  scroll: string
+  socialsTitle: string
+  menuOpen: string
+  menuClose: string
+  menuLabel: string
+  homeAria: string
+  placeholders: { about: string; projects: string; contact: string }
+}
+
 export interface PortfolioData {
   profile: Profile
   art: Art
@@ -111,4 +130,5 @@ export interface PortfolioData {
   services: Service[]
   experience: Experience[]
   songs: Song[]
+  ui: UiLabels
 }
