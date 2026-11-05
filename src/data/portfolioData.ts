@@ -86,12 +86,6 @@ export const portfolioData: PortfolioData = {
 
   softSkills: [
     {
-      id: 'comunicacion',
-      name: 'Comunicación y servicio al cliente',
-      icon: 'MessageCircle',
-      evidence: 'Experiencia en atención al cliente.',
-    },
-    {
       id: 'problemas',
       name: 'Resolución de problemas',
       icon: 'Wrench',
