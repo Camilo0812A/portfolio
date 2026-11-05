@@ -1,5 +1,10 @@
 import {
   ArrowDownRight,
+  ArrowUp,
+  Check,
+  Copy,
+  Music,
+  Play,
   ArrowUpRight,
   Briefcase,
   CircleHelp,
@@ -55,6 +60,11 @@ const icons: Record<string, LucideIcon> = {
   GraduationCap,
   Headphones,
   Briefcase,
+  ArrowUp,
+  Check,
+  Copy,
+  Music,
+  Play,
 }
 
 interface IconProps extends LucideProps {

@@ -34,7 +34,7 @@ export function Navbar({ menuOpen, onOpenMenu }: NavbarProps) {
       <div className="flex items-center rounded-full border border-border bg-bg/60 py-1.5 pl-5 pr-1.5 backdrop-blur-md">
         <a
           href={homeHref}
-          aria-label={ui.homeAria}
+          aria-label={`${profile.shortName} · ${ui.homeAria}`}
           onClick={(e) => {
             e.preventDefault()
             lenis.scrollTo(homeHref)

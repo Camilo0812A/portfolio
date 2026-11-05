@@ -34,7 +34,7 @@ function ServiceRow({ service, open, onToggle }: RowProps) {
           aria-expanded={open}
           aria-controls={panelId}
           onClick={onToggle}
-          className="flex w-full items-center gap-5 py-6 text-left outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gold md:gap-10 md:py-8"
+          className="flex w-full items-center gap-5 py-6 text-left outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gold md:gap-10 md:py-8"
         >
           <span className="w-8 shrink-0 font-mono text-sm tracking-[0.2em] text-gold md:w-12 md:text-base">
             {service.number}
