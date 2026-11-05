@@ -269,10 +269,7 @@ function MarqueeRow({ skills, reverse = false, duration, rowId }: MarqueeRowProp
   )
 }
 
-// Última card de la grilla (7 = impar): ocupa el ancho restante en tablet y se centra en desktop.
-const LAST_CARD = 'md:col-span-2 lg:col-span-1 lg:col-start-2'
-
-function SoftSkillCard({ skill, index, last }: { skill: SoftSkill; index: number; last: boolean }) {
+function SoftSkillCard({ skill, index }: { skill: SoftSkill; index: number }) {
   const reduce = useReducedMotion()
   return (
     <motion.li
@@ -280,7 +277,7 @@ function SoftSkillCard({ skill, index, last }: { skill: SoftSkill; index: number
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.7, ease: EASE, delay: (index % 3) * 0.1 }}
-      className={`glow-corner group relative overflow-hidden rounded-card border border-border bg-surface p-6 transition-[border-color,box-shadow] duration-300 hover:border-gold/40 hover:shadow-[0_0_40px_-16px_rgb(200_162_74/0.45)] ${last ? LAST_CARD : ''}`}
+      className="glow-corner group relative overflow-hidden rounded-card border border-border bg-surface p-6 transition-[border-color,box-shadow] duration-300 hover:border-gold/40 hover:shadow-[0_0_40px_-16px_rgb(200_162_74/0.45)]"
     >
       <span className="flex size-11 items-center justify-center rounded-full border border-gold/30 text-gold transition-transform duration-300 ease-out group-hover:rotate-6 group-hover:scale-110 motion-reduce:transform-none">
         <Icon name={skill.icon} size={20} aria-hidden="true" />
@@ -321,7 +318,7 @@ function SoftSkills() {
       </motion.header>
       <ul aria-labelledby={titleId} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {softSkills.map((s, i) => (
-          <SoftSkillCard key={s.id} skill={s} index={i} last={i === softSkills.length - 1 && softSkills.length % 2 === 1} />
+          <SoftSkillCard key={s.id} skill={s} index={i} />
         ))}
       </ul>
     </div>
