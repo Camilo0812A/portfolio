@@ -9,13 +9,11 @@ export const portfolioData: PortfolioData = {
     initials: 'DC',
     role: 'Software',
     roleAccent: 'Developer',
-    // TODO: reescribir con tu propia voz
-    tagline: 'Estudiante de Ingeniería de Sistemas que convierte ideas en software.',
+    tagline: 'Construyo experiencias web rápidas, claras y con carácter.',
     heroWord: 'CAMILO',
-    // TODO: reescribir con tu propia voz
-    bio: 'Soy estudiante de Ingeniería de Sistemas y desarrollador de software. Me interesa construir productos web claros, rápidos y bien cuidados.',
-    // TODO: reescribir con tu propia voz
-    philosophy: 'Código limpio, detalles cuidados y aprender un poco cada día.',
+    bio: 'Soy Camilo, estudiante de Ingeniería de Sistemas en Colombia. Me gusta construir cosas que se sientan bien al usarlas: herramientas web rápidas, interfaces cuidadas y código que otros puedan entender. Vengo de Java y la programación orientada a objetos, y hoy me muevo entre TypeScript, React y Python. Además, llevo un año haciendo soporte técnico: arreglar equipos e instalar Linux me enseñó a resolver problemas reales.',
+    philosophy:
+      'Un buen software es como un buen juego: reglas claras, respuesta inmediata y cero frustración innecesaria. Construyo por fases, pruebo cada paso y cuido los detalles que nadie ve, pero todos sienten.',
     location: 'Colombia',
     email: 'dcolmenaresh1@gmail.com',
     githubUser: 'Camilo0812A',
@@ -34,6 +32,7 @@ export const portfolioData: PortfolioData = {
   nav: [
     { label: 'Inicio', href: '#home' },
     { label: 'Sobre mí', href: '#about' },
+    { label: 'Stack', href: '#skills' },
     { label: 'Proyectos', href: '#projects' },
     { label: 'Contacto', href: '#contact' },
   ],
@@ -256,8 +255,29 @@ export const portfolioData: PortfolioData = {
     menuClose: 'Cerrar menú',
     menuLabel: 'Menú de navegación',
     homeAria: 'Ir al inicio',
+    about: {
+      eyebrow: '01 — SOBRE MÍ',
+      title: { before: 'Detrás del', accent: 'código', after: '' },
+      portraitAria: 'Retrato de Camilo formado por partículas',
+      portraitCaption: 'CAMILO · COLOMBIA',
+      availableText: 'Disponible para prácticas y proyectos',
+      unavailableText: 'No disponible por ahora',
+      locationLabel: 'Ubicación',
+    },
+    philosophy: {
+      eyebrow: '02 — FILOSOFÍA',
+      imageAlt:
+        'Dos manos al óleo, una sostiene un control de videojuego y de la otra sale un cable dorado',
+    },
+    skills: {
+      eyebrow: '03 — STACK',
+      title: { before: 'Mi caja de', accent: 'herramientas', after: '' },
+      root: 'Stack',
+      treeLabel: 'Árbol de herramientas por área',
+      marqueeLabel: 'Habilidades técnicas',
+      levelLabel: 'Nivel',
+    },
     placeholders: {
-      about: 'Sobre mí',
       projects: 'Proyectos',
       contact: 'Contacto',
     },
