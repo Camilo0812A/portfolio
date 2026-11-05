@@ -72,8 +72,10 @@ export interface Song {
   id: string
   title: string
   artist: string
+  album?: string
+  /** URL remota de la portada (se carga desde Spotify, no se guarda en el repo). */
   cover?: string
-  spotifyUrl?: string
+  spotifyUrl: string
 }
 
 export interface NavItem {
@@ -160,7 +162,6 @@ export interface UiLabels {
     newTab: string
     shotAlt: string
     codeAria: string
-    siteAria: string
   }
   services: { eyebrow: string; title: SectionTitle; listLabel: string }
   experience: {
@@ -171,7 +172,38 @@ export interface UiLabels {
     icons: Record<string, string>
     fallbackIcon: string
   }
-  placeholders: { contact: string }
+  music: {
+    eyebrow: string
+    title: SectionTitle
+    listLabel: string
+    phrase: string
+    listen: string
+    newTab: string
+  }
+  contact: {
+    eyebrow: string
+    imageAlt: string
+    title: string
+    titleAccent: string
+    availableText: string
+    unavailableText: string
+    emailLabel: string
+    copy: string
+    copied: string
+    copyFailed: string
+    copyAria: string
+    write: string
+    writeAria: string
+    newTab: string
+  }
+  footer: {
+    rights: string
+    backToTop: string
+    built: string
+    artCredit: string
+    socialsLabel: string
+  }
+  skip: string
 }
 
 export interface PortfolioData {

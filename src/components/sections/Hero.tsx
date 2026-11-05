@@ -29,6 +29,16 @@ const rise: Variants = {
   }),
 }
 
+// La bajada es el texto más grande del primer pliegue: solo se desliza (sin fundido)
+// para que se pinte desde el primer frame y no retrase el LCP.
+const slide: Variants = {
+  hidden: { y: 24 },
+  show: (delay: number) => ({
+    y: 0,
+    transition: { duration: 0.8, ease: EASE, delay },
+  }),
+}
+
 // Las cajas del brillo replican exactamente el recuadro que ocupa la imagen con
 // object-cover, así la llama coincide en cualquier tamaño de pantalla.
 const glowBase =
@@ -169,7 +179,7 @@ export function Hero({ ready }: HeroProps) {
 
         <motion.p
           className="mt-3 max-w-md text-muted"
-          variants={rise}
+          variants={slide}
           custom={0.7}
           initial={initial}
           animate={state}

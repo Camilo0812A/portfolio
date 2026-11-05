@@ -201,10 +201,13 @@ function FeaturedCard({
                 href={project.liveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`${t.siteAria} ${project.title} (${t.newTab})`}
                 className="inline-flex items-center gap-1.5 rounded-full bg-text px-4 py-2 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-bg transition-colors duration-200 hover:bg-gold"
               >
                 {t.viewSite}
+                <span className="sr-only">
+                  {' '}
+                  — {project.title} ({t.newTab})
+                </span>
                 <Icon name="ArrowUpRight" size={14} aria-hidden="true" />
               </a>
             )}
@@ -225,12 +228,12 @@ function FeaturedCard({
                 {t.private}
               </span>
             )}
-            <span
-              aria-label={`${index + 1} / ${total}`}
-              className="ml-auto font-mono text-sm tracking-[0.2em] text-gold"
-            >
+            <span className="ml-auto font-mono text-sm tracking-[0.2em] text-gold">
               <span aria-hidden="true">
                 {String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
+              </span>
+              <span className="sr-only">
+                {index + 1} / {total}
               </span>
             </span>
           </div>
@@ -338,6 +341,54 @@ function DetailBlock({ title, text }: { title: string; text: string }) {
   )
 }
 
+/** Miniatura de navegador para las cards compactas. */
+function MiniMockup({ project }: { project: Project }) {
+  const { profile, ui } = portfolioData
+  const [broken, setBroken] = useState(false)
+  const showImage = Boolean(project.image) && !broken
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-bg-soft">
+      <div className="flex items-center gap-2 border-b border-border bg-surface-2 px-2.5 py-1.5">
+        <span aria-hidden="true" className="flex shrink-0 gap-1">
+          <span className="size-1.5 rounded-full bg-accent/70" />
+          <span className="size-1.5 rounded-full bg-gold/60" />
+          <span className="size-1.5 rounded-full bg-text/25" />
+        </span>
+        <span
+          aria-hidden="true"
+          className="min-w-0 flex-1 truncate rounded bg-bg/70 px-2 py-0.5 text-center font-mono text-[9px] tracking-wide text-muted"
+        >
+          {displayUrl(project, profile.githubUser)}
+        </span>
+      </div>
+      <div className="relative aspect-[16/10] overflow-hidden">
+        {showImage ? (
+          <img
+            src={project.image}
+            alt={`${ui.projects.shotAlt} ${project.title}`}
+            loading="lazy"
+            decoding="async"
+            width={1440}
+            height={900}
+            onError={() => setBroken(true)}
+            className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-500 group-hover/card:scale-[1.03]"
+          />
+        ) : (
+          <div className="grain absolute inset-0 flex items-center justify-center bg-bg-soft">
+            <span
+              aria-hidden="true"
+              className="text-gradient-metal font-display text-5xl font-extrabold leading-none"
+            >
+              {initialsOf(project.title)}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* ───────────────────────── Card compacta ───────────────────────── */
 
 function CompactCard({ project }: { project: Project }) {
@@ -347,6 +398,7 @@ function CompactCard({ project }: { project: Project }) {
 
   return (
     <li className="group/card glow-corner relative flex flex-col overflow-hidden gap-4 rounded-card border border-border bg-surface p-6 transition-colors duration-300 focus-within:border-gold hover:border-gold md:p-7">
+      <MiniMockup project={project} />
       <div className="flex items-start justify-between gap-4">
         <h4 className="font-display text-xl font-bold leading-tight text-text md:text-2xl">
           {href ? (

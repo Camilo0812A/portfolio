@@ -35,6 +35,8 @@
 
   body {
     @apply bg-bg text-text font-sans antialiased;
+    /* Los elementos decorativos (brillos, marquee) nunca deben generar scroll horizontal. */
+    overflow-x: clip;
   }
 }
 
@@ -155,5 +157,41 @@
   }
   .marquee-dup {
     display: none;
+  }
+}
+
+/* Disco de vinilo: surcos concéntricos y etiqueta carmesí/dorada */
+@keyframes vinyl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.vinyl {
+  border-radius: 9999px;
+  background:
+    radial-gradient(
+      circle,
+      var(--color-bg) 0 3%,
+      var(--color-gold) 3% 6%,
+      var(--color-accent) 6% 31%,
+      var(--color-gold) 31% 33%,
+      transparent 33%
+    ),
+    repeating-radial-gradient(circle, #0a0807 0 2px, #26211b 2px 3px);
+  box-shadow:
+    0 0 0 1px rgb(237 230 216 / 0.08),
+    0 18px 40px -12px rgb(0 0 0 / 0.9);
+}
+.vinyl-spin {
+  animation: vinyl-spin 6s linear infinite;
+  animation-play-state: paused;
+}
+.group:hover .vinyl-spin,
+.group:focus-visible .vinyl-spin {
+  animation-play-state: running;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vinyl-spin {
+    animation: none;
   }
 }

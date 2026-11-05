@@ -1,32 +1,55 @@
-# React + TypeScript + Vite
+# Camilo Colmenares · Software Developer
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Portafolio personal con estética de claroscuro al óleo y guiños gamer.
 
-Currently, two official plugins are available:
+**Sitio:** https://dcportafolio.vercel.app
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Descripción
 
-## React Compiler
+Sitio de una sola página con secciones de inicio, sobre mí, filosofía, stack, proyectos, servicios, trayectoria, música y contacto. Incluye animaciones suaves con scroll, retrato de partículas, cards apiladas de proyectos y soporte completo para `prefers-reduced-motion`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Stack
 
-## Expanding the Oxlint configuration
+- React 19 + TypeScript
+- Vite
+- Tailwind CSS 4
+- Motion (animaciones) y Lenis (scroll suave)
+- Lucide (iconos)
+- Oxlint
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Estructura
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```
+public/            Imágenes, favicon, og.jpg, robots.txt y sitemap.xml
+src/
+  components/
+    effects/       Efectos visuales (retrato de partículas)
+    layout/        Navbar, menú, preloader, footer
+    sections/      Hero, About, Philosophy, Skills, Projects, Services, Experience, Music, Contact
+    ui/            Piezas reutilizables (Icon, SectionHeading)
+  context/         Contexto de Lenis
+  data/            portfolioData.ts: todo el contenido del sitio
+  hooks/           useLenis, useMediaQuery
+  lib/             Utilidades
+  types/           Tipos del contenido
+  index.css        Tokens de diseño y estilos globales
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Cómo correrlo
+
+```bash
+npm install
+npm run dev      # servidor de desarrollo
+npm run build    # compila TypeScript y genera dist/
+npm run preview  # sirve la compilación local
+npm run lint
+```
+
+## Dónde editar el contenido
+
+Todo el texto, proyectos, canciones, enlaces y etiquetas viven en `src/data/portfolioData.ts`. Los componentes no llevan contenido propio.
+
+## Créditos
+
+- Las portadas de las canciones se cargan directamente desde Spotify; no se almacenan en este repositorio.
+- El arte de fondo fue creado para este sitio.
