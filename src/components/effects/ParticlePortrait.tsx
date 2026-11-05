@@ -9,8 +9,8 @@ const ACCENT_CHANCE = 0.1
 
 const BRIGHTNESS_THRESHOLD = 0.08
 const MAX_DPR = 2
-const TARGET_DESKTOP = 3800
-const TARGET_MOBILE = 1700
+const TARGET_DESKTOP = 5000
+const TARGET_MOBILE = 2200
 
 // Física: muelle simple hacia el punto de origen + repulsión del puntero.
 const SPRING = 0.055

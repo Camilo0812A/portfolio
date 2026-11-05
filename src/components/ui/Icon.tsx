@@ -1,4 +1,17 @@
-import { ArrowUpRight, CircleHelp, Database, Mail, MapPin, Monitor, Wrench } from 'lucide-react'
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  Briefcase,
+  CircleHelp,
+  Database,
+  GraduationCap,
+  Headphones,
+  Lock,
+  Mail,
+  MapPin,
+  Monitor,
+  Wrench,
+} from 'lucide-react'
 import type { LucideIcon, LucideProps } from 'lucide-react'
 
 // lucide-react >= 1.0 ya no incluye iconos de marca (Github, Linkedin),
@@ -37,6 +50,11 @@ const icons: Record<string, LucideIcon> = {
   Wrench,
   MapPin,
   ArrowUpRight,
+  ArrowDownRight,
+  Lock,
+  GraduationCap,
+  Headphones,
+  Briefcase,
 }
 
 interface IconProps extends LucideProps {
