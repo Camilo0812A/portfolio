@@ -61,10 +61,11 @@ export interface Service {
 export interface Experience {
   id: string
   role: string
-  org: string
-  period: string
+  org?: string
+  period?: string
   description: string
   tags?: string[]
+  kind: 'education' | 'work'
 }
 
 export interface Song {
@@ -141,7 +142,36 @@ export interface UiLabels {
     marqueeLabel: string
     levelLabel: string
   }
-  placeholders: { projects: string; contact: string }
+  projects: {
+    eyebrow: string
+    title: SectionTitle
+    listLabel: string
+    moreTitle: string
+    moreLabel: string
+    viewSite: string
+    code: string
+    private: string
+    showDetails: string
+    hideDetails: string
+    problem: string
+    solution: string
+    technical: string
+    role: string
+    newTab: string
+    shotAlt: string
+    codeAria: string
+    siteAria: string
+  }
+  services: { eyebrow: string; title: SectionTitle; listLabel: string }
+  experience: {
+    eyebrow: string
+    title: SectionTitle
+    listLabel: string
+    /** Icono Lucide por id de entrada. */
+    icons: Record<string, string>
+    fallbackIcon: string
+  }
+  placeholders: { contact: string }
 }
 
 export interface PortfolioData {
