@@ -105,6 +105,13 @@ export interface Profile {
   available: boolean
 }
 
+/** Título de sección con una palabra destacada en serif itálica. */
+export interface SectionTitle {
+  before: string
+  accent: string
+  after: string
+}
+
 export interface UiLabels {
   heroEyebrow: string
   heroAlt: string
@@ -116,7 +123,25 @@ export interface UiLabels {
   menuClose: string
   menuLabel: string
   homeAria: string
-  placeholders: { about: string; projects: string; contact: string }
+  about: {
+    eyebrow: string
+    title: SectionTitle
+    portraitAria: string
+    portraitCaption: string
+    availableText: string
+    unavailableText: string
+    locationLabel: string
+  }
+  philosophy: { eyebrow: string; imageAlt: string }
+  skills: {
+    eyebrow: string
+    title: SectionTitle
+    root: string
+    treeLabel: string
+    marqueeLabel: string
+    levelLabel: string
+  }
+  placeholders: { projects: string; contact: string }
 }
 
 export interface PortfolioData {

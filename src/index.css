@@ -67,6 +67,8 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
+  opacity: 0.7;
+  transition: opacity 0.4s ease;
   background:
     radial-gradient(
       circle at 0% 0%,
@@ -78,6 +80,12 @@
       rgb(200 162 74 / 0.08),
       transparent 45%
     );
+}
+
+/* Hover de card: el resplandor de esquina se intensifica */
+.glow-corner:hover::before,
+.glow-corner:focus-within::before {
+  opacity: 1;
 }
 
 /* Textura de lienzo: ruido SVG inline, opacidad ~0.06 */
@@ -98,6 +106,30 @@
   background-size: 180px 180px;
 }
 
+/* Marquee infinito: el track lleva el contenido duplicado y se desplaza -50% */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee {
+  overflow-x: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee var(--marquee-duration, 60s) linear infinite;
+}
+.marquee-track[data-reverse="true"] {
+  animation-direction: reverse;
+}
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
 /* Accesibilidad: reduce animaciones si el usuario lo pide */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -107,5 +139,21 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Reduced motion: filas estáticas y desplazables, sin contenido duplicado */
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .marquee-track {
+    animation: none;
+    transform: none;
+  }
+  .marquee-dup {
+    display: none;
   }
 }

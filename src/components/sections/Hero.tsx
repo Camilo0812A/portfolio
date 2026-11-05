@@ -187,7 +187,7 @@ export function Hero({ ready }: HeroProps) {
           <a
             href="#projects"
             onClick={goTo('#projects')}
-            className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-medium text-text transition-colors hover:bg-accent-soft"
+            className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-medium text-text transition-colors hover:bg-[#8f1b21]"
           >
             {ui.ctaProjects}
             <ArrowUpRight size={18} aria-hidden="true" />
