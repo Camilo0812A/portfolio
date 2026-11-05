@@ -84,6 +84,53 @@ export const portfolioData: PortfolioData = {
     },
   ],
 
+  softSkills: [
+    {
+      id: 'comunicacion',
+      name: 'Comunicación y servicio al cliente',
+      icon: 'MessageCircle',
+      evidence: 'Experiencia en atención al cliente.',
+    },
+    {
+      id: 'problemas',
+      name: 'Resolución de problemas',
+      icon: 'Wrench',
+      evidence: 'Soporte técnico: diagnóstico de equipos e instalación de sistemas operativos.',
+    },
+    {
+      id: 'organizacion',
+      name: 'Organización y trabajo por fases',
+      icon: 'ListChecks',
+      evidence: 'Promptazo y este portafolio, construidos por fases definidas.',
+    },
+    {
+      id: 'aprendizaje-rapido',
+      name: 'Aprendizaje rápido',
+      icon: 'Zap',
+      evidence:
+        'Paso de una tecnología nueva a un proyecto funcional en poco tiempo, como Astro en Promptazo o WebGL2 en este portafolio.',
+    },
+    {
+      id: 'aprendizaje-autonomo',
+      name: 'Aprendizaje autónomo',
+      icon: 'BookOpen',
+      evidence:
+        'Proyectos personales con tecnologías que no son de la carrera: Astro, WebGL y Playwright.',
+    },
+    {
+      id: 'detalle',
+      name: 'Atención al detalle',
+      icon: 'ScanEye',
+      evidence: 'Accesibilidad WCAG AA, Lighthouse de 95 a 100 y 1.120 pruebas unitarias en Promptazo.',
+    },
+    {
+      id: 'adaptabilidad',
+      name: 'Adaptabilidad',
+      icon: 'Shuffle',
+      evidence: 'Trabajo con Java, TypeScript, React y Python según lo que pida cada proyecto.',
+    },
+  ],
+
   // Proyectos. Los repos públicos salen de github.com/Camilo0812A (sin este repo "portfolio"
   // ni el repo de perfil). Descripción y tech se tomaron de cada README (no del campo "About"
   // de GitHub). Los repos privados no llevan repoUrl.
@@ -219,7 +266,8 @@ export const portfolioData: PortfolioData = {
     },
   ],
 
-  // Las portadas son el thumbnail_url del oEmbed oficial de Spotify (se cargan desde Spotify).
+  // Las portadas son el thumbnail_url del oEmbed oficial de Spotify (se cargan desde Spotify),
+  // salvo la de Waltz for Moon, que es propia y vive en public/images/songs/.
   songs: [
     {
       id: 'glue-song',
@@ -233,7 +281,7 @@ export const portfolioData: PortfolioData = {
       title: 'Waltz for Moon',
       artist: 'Hodge',
       album: 'Can This Love Be Translated? (Netflix)',
-      cover: 'https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e025843a249f88fed1b0ef716e1',
+      cover: '/images/songs/waltz-for-moon.webp',
       spotifyUrl: 'https://open.spotify.com/track/3XOwTnHD3WuPKA2sYlfWAl',
     },
     {
@@ -270,7 +318,7 @@ export const portfolioData: PortfolioData = {
       title: { before: 'Detrás del', accent: 'código', after: '' },
       portraitAria: 'Retrato de Camilo formado por partículas',
       portraitCaption: 'CAMILO · COLOMBIA',
-      availableText: 'Disponible para prácticas y proyectos',
+      availableText: 'Disponible para trabajo, prácticas y proyectos',
       unavailableText: 'No disponible por ahora',
       locationLabel: 'Ubicación',
     },
@@ -286,6 +334,11 @@ export const portfolioData: PortfolioData = {
       treeLabel: 'Árbol de herramientas por área',
       marqueeLabel: 'Habilidades técnicas',
       levelLabel: 'Nivel',
+      soft: {
+        eyebrow: 'CÓMO TRABAJO',
+        title: { before: 'Habilidades', accent: 'blandas', after: '' },
+        listLabel: 'Habilidades blandas',
+      },
     },
     projects: {
       eyebrow: '04 — PROYECTOS',
@@ -335,7 +388,7 @@ export const portfolioData: PortfolioData = {
       imageAlt: 'Pintura al óleo de un caballero sentado frente a un monitor CRT encendido',
       title: 'Hablemos',
       titleAccent: '¿creamos algo?',
-      availableText: 'Disponible para prácticas y proyectos',
+      availableText: 'Disponible para trabajo, prácticas y proyectos',
       unavailableText: 'No disponible por ahora',
       emailLabel: 'Correo',
       copy: 'Copiar correo',
