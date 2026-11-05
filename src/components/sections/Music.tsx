@@ -18,6 +18,9 @@ function initialsOf(title: string): string {
     .toUpperCase()
 }
 
+/** Las portadas remotas (Spotify) no deben enviar referrer; las locales no lo necesitan. */
+const isRemote = (src: string) => /^https?:\/\//i.test(src)
+
 function SongCard({ song, index }: { song: Song; index: number }) {
   const { music: t } = portfolioData.ui
   const reduce = useReducedMotion()
@@ -60,7 +63,7 @@ function SongCard({ song, index }: { song: Song; index: number }) {
                 height={300}
                 loading="lazy"
                 decoding="async"
-                referrerPolicy="no-referrer"
+                referrerPolicy={song.cover && isRemote(song.cover) ? 'no-referrer' : undefined}
                 onError={() => setBroken(true)}
                 className="size-full object-cover grayscale transition duration-500 group-hover:scale-105 group-hover:grayscale-0 group-focus-visible:scale-105 group-focus-visible:grayscale-0 [@media(hover:none)]:grayscale-0"
               />

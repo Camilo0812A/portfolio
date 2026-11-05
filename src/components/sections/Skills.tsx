@@ -4,7 +4,7 @@ import { motion, useInView, useReducedMotion } from 'motion/react'
 import { Icon } from '@/components/ui/Icon'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { portfolioData } from '@/data/portfolioData'
-import type { Skill } from '@/types/portfolio'
+import type { Skill, SoftSkill } from '@/types/portfolio'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 // Sangría en cascada de las cards (solo desktop).
@@ -269,6 +269,65 @@ function MarqueeRow({ skills, reverse = false, duration, rowId }: MarqueeRowProp
   )
 }
 
+// Última card de la grilla (7 = impar): ocupa el ancho restante en tablet y se centra en desktop.
+const LAST_CARD = 'md:col-span-2 lg:col-span-1 lg:col-start-2'
+
+function SoftSkillCard({ skill, index, last }: { skill: SoftSkill; index: number; last: boolean }) {
+  const reduce = useReducedMotion()
+  return (
+    <motion.li
+      initial={reduce ? false : { opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.7, ease: EASE, delay: (index % 3) * 0.1 }}
+      className={`glow-corner group relative overflow-hidden rounded-card border border-border bg-surface p-6 transition-[border-color,box-shadow] duration-300 hover:border-gold/40 hover:shadow-[0_0_40px_-16px_rgb(200_162_74/0.45)] ${last ? LAST_CARD : ''}`}
+    >
+      <span className="flex size-11 items-center justify-center rounded-full border border-gold/30 text-gold transition-transform duration-300 ease-out group-hover:rotate-6 group-hover:scale-110 motion-reduce:transform-none">
+        <Icon name={skill.icon} size={20} aria-hidden="true" />
+      </span>
+      <h4 className="mt-5 font-display text-lg font-bold leading-snug text-text">{skill.name}</h4>
+      <p className="mt-2 text-sm leading-relaxed text-muted">{skill.evidence}</p>
+    </motion.li>
+  )
+}
+
+function SoftSkills() {
+  const { softSkills, ui } = portfolioData
+  const t = ui.skills.soft
+  const reduce = useReducedMotion()
+  const titleId = useId()
+  return (
+    <div className="mt-20 border-t border-border pt-14 md:mt-28 md:pt-20">
+      <motion.header
+        initial={reduce ? false : { opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.5 }}
+        transition={{ duration: 0.8, ease: EASE }}
+        className="mb-8 md:mb-10"
+      >
+        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-gold md:text-xs">
+          {t.eyebrow}
+        </p>
+        <h3
+          id={titleId}
+          className="mt-3 font-display text-[clamp(1.75rem,4vw,2.75rem)] font-extrabold leading-tight tracking-tight text-text"
+        >
+          {t.title.before}{' '}
+          <span className="font-serif font-normal italic text-accent-soft [-webkit-text-fill-color:var(--color-accent-soft)]">
+            {t.title.accent}
+          </span>
+          {t.title.after ? ` ${t.title.after}` : null}
+        </h3>
+      </motion.header>
+      <ul aria-labelledby={titleId} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {softSkills.map((s, i) => (
+          <SoftSkillCard key={s.id} skill={s} index={i} last={i === softSkills.length - 1 && softSkills.length % 2 === 1} />
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 export function Skills() {
   const { skills, ui } = portfolioData
   const baseId = useId()
@@ -285,6 +344,10 @@ export function Skills() {
       <div className="mt-16 md:mt-24">
         <MarqueeRow skills={rowA} duration={70} rowId={`${baseId}-a`} />
         <MarqueeRow skills={rowB} reverse duration={85} rowId={`${baseId}-b`} />
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 md:px-10">
+        <SoftSkills />
       </div>
     </section>
   )

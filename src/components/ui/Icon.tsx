@@ -16,6 +16,12 @@ import {
   MapPin,
   Monitor,
   Wrench,
+  BookOpen,
+  ListChecks,
+  MessageCircle,
+  ScanEye,
+  Shuffle,
+  Zap,
 } from 'lucide-react'
 import type { LucideIcon, LucideProps } from 'lucide-react'
 
@@ -65,6 +71,12 @@ const icons: Record<string, LucideIcon> = {
   Copy,
   Music,
   Play,
+  BookOpen,
+  ListChecks,
+  MessageCircle,
+  ScanEye,
+  Shuffle,
+  Zap,
 }
 
 interface IconProps extends LucideProps {

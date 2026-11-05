@@ -51,6 +51,14 @@ export interface Project {
   role?: string
 }
 
+export interface SoftSkill {
+  id: string
+  name: string
+  /** Nombre de icono Lucide */
+  icon: string
+  evidence: string
+}
+
 export interface Service {
   id: string
   number: string
@@ -73,7 +81,7 @@ export interface Song {
   title: string
   artist: string
   album?: string
-  /** URL remota de la portada (se carga desde Spotify, no se guarda en el repo). */
+  /** Portada: ruta local (`/images/songs/...`) o URL remota de Spotify. */
   cover?: string
   spotifyUrl: string
 }
@@ -143,6 +151,11 @@ export interface UiLabels {
     treeLabel: string
     marqueeLabel: string
     levelLabel: string
+    soft: {
+      eyebrow: string
+      title: SectionTitle
+      listLabel: string
+    }
   }
   projects: {
     eyebrow: string
@@ -213,6 +226,7 @@ export interface PortfolioData {
   socials: SocialLink[]
   skills: Skill[]
   toolGroups: ToolGroup[]
+  softSkills: SoftSkill[]
   projects: Project[]
   services: Service[]
   experience: Experience[]
