@@ -163,16 +163,6 @@ export const portfolioData: PortfolioData = {
       featured: false,
       year: 2026,
     },
-    {
-      id: 'bitacora-dev',
-      title: 'Bitácora Dev',
-      description:
-        'Bitácora diaria en Markdown de lo que aprendo en la U y en mis proyectos.',
-      tech: ['Markdown'],
-      repoUrl: 'https://github.com/Camilo0812A/bitacora-dev',
-      featured: false,
-      year: 2026,
-    },
   ],
 
   services: [
