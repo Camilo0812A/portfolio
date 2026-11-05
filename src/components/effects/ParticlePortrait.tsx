@@ -3,160 +3,305 @@ import { useReducedMotion } from 'motion/react'
 import { portfolioData } from '@/data/portfolioData'
 import { cn } from '@/lib/cn'
 
-// Paleta óleo: mayoría blanco hueso, con toques carmesí y dorado (~10 %).
-const COLORS = ['#ede6d8', '#c4343b', '#c8a24a'] as const
-const ACCENT_CHANCE = 0.1
+/* ───────────────────────── Parámetros ───────────────────────── */
 
-const BRIGHTNESS_THRESHOLD = 0.08
+const STEP_DESKTOP = 3 // px CSS por celda
+const STEP_MOBILE = 4
+const MAX_DESKTOP = 30000
+const MAX_MOBILE = 10000
 const MAX_DPR = 2
-const TARGET_DESKTOP = 5000
-const TARGET_MOBILE = 2200
+const BRIGHTNESS_MIN = 0.04
+const GOLD_CHANCE = 0.03
+const CRIMSON_CHANCE = 0.01
+const ENTRY_MS = 1400
+const POINTER_RADIUS = 90 // px CSS
+const RESIZE_DEBOUNCE_MS = 150
 
-// Física: muelle simple hacia el punto de origen + repulsión del puntero.
-const SPRING = 0.055
-const DAMPING = 0.86
-const REPEL_STRENGTH = 2.6
-const ENTRY_SPREAD_MS = 900
-const ENTRY_FADE_MS = 450
-const REST_EPSILON = 0.03
+// Paleta: blanco hueso, dorado y carmesí (RGB 0-1).
+const PALETTE = new Float32Array([
+  0xed / 255, 0xe6 / 255, 0xd8 / 255,
+  0xc8 / 255, 0xa2 / 255, 0x4a / 255,
+  0xb4 / 255, 0x23 / 255, 0x2a / 255,
+])
 
-interface Field {
+/* ───────────────────────── Shaders ───────────────────────── */
+
+const VERTEX = /* glsl */ `#version 300 es
+in vec4 a_pos;   // xy: destino, zw: origen disperso (px CSS)
+in vec4 a_attr;  // x: brillo, y: fase, z: índice de color, w: retardo de entrada
+
+uniform vec2 u_res;
+uniform float u_dpr;
+uniform float u_step;
+uniform float u_time;
+uniform float u_progress;
+uniform float u_motion;
+uniform vec2 u_pointer;
+uniform float u_strength;
+uniform float u_radius;
+uniform vec3 u_palette[3];
+
+out vec3 v_color;
+out float v_alpha;
+
+void main() {
+  float local = clamp((u_progress - a_attr.w * 0.4) / 0.6, 0.0, 1.0);
+  float ease = 1.0 - pow(1.0 - local, 3.0);
+  vec2 pos = mix(a_pos.zw, a_pos.xy, ease);
+
+  // Repulsión del puntero con caída suave; la intensidad llega ya amortiguada desde JS.
+  vec2 d = pos - u_pointer;
+  float dist = length(d);
+  float fall = 1.0 - smoothstep(0.0, u_radius, dist);
+  pos += (d / max(dist, 0.001)) * fall * fall * u_strength * u_radius * 0.5;
+
+  // Twinkle: ±10 % de brillo con fase propia.
+  float speed = 1.3 + fract(a_attr.y * 13.0) * 1.7;
+  float b = min(1.0, a_attr.x * (1.0 + 0.1 * u_motion * sin(u_time * speed + a_attr.y * 6.2831853)));
+
+  gl_PointSize = max(1.0, u_step * 0.75 * pow(b, 0.6) * u_dpr);
+  v_alpha = (0.35 + 0.65 * b) * smoothstep(0.0, 0.3, local);
+  v_color = u_palette[int(a_attr.z + 0.5)];
+
+  vec2 clip = pos / u_res * 2.0 - 1.0;
+  gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
+}
+`
+
+const FRAGMENT = /* glsl */ `#version 300 es
+precision mediump float;
+in vec3 v_color;
+in float v_alpha;
+out vec4 outColor;
+void main() {
+  outColor = vec4(v_color * v_alpha, v_alpha);
+}
+`
+
+/* ───────────────────────── Muestreo en rejilla ───────────────────────── */
+
+/** PRNG determinista: la rejilla no cambia de color ni de dispersión entre reconstrucciones. */
+function mulberry32(seed: number) {
+  let a = seed
+  return () => {
+    a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+interface Grid {
   count: number
-  homeX: Float32Array
-  homeY: Float32Array
-  x: Float32Array
-  y: Float32Array
-  vx: Float32Array
-  vy: Float32Array
-  size: Float32Array
-  alpha: Float32Array
-  delay: Float32Array
-  color: Uint8Array
-}
-
-/** Dibuja la imagen "cover" (anclada arriba para conservar el rostro) en un canvas offscreen. */
-function readPixels(img: HTMLImageElement, w: number, h: number): Uint8ClampedArray | null {
-  const off = document.createElement('canvas')
-  off.width = w
-  off.height = h
-  const ctx = off.getContext('2d', { willReadFrequently: true })
-  if (!ctx) return null
-  const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight)
-  const dw = img.naturalWidth * scale
-  const dh = img.naturalHeight * scale
-  ctx.fillStyle = '#000'
-  ctx.fillRect(0, 0, w, h)
-  ctx.drawImage(img, (w - dw) / 2, (h - dh) * 0.2, dw, dh)
-  return ctx.getImageData(0, 0, w, h).data
-}
-
-interface Sample {
-  x: number
-  y: number
-  tone: number
+  step: number
+  pos: Float32Array
+  attr: Float32Array
 }
 
 /**
- * Muestrea la imagen cada `step` px. Cada celda entra con probabilidad proporcional
- * a su brillo (estarcido), así las sombras quedan ralas y los rasgos del rostro se leen.
+ * Lee la imagen (cover, anclada abajo para que la camiseta llegue al borde) en un canvas
+ * offscreen de una celda por píxel y genera una partícula por celda con brillo suficiente.
  */
-function sampleTones(data: Uint8ClampedArray, w: number, h: number, step: number, norm: number) {
-  const out: Sample[] = []
-  for (let y = 0; y < h; y += step) {
-    for (let x = 0; x < w; x += step) {
-      const b = Math.min(1, (data[(y * w + x) * 4] / 255) * norm)
-      if (b <= BRIGHTNESS_THRESHOLD) continue
-      const tone = Math.pow((b - BRIGHTNESS_THRESHOLD) / (1 - BRIGHTNESS_THRESHOLD), 1.15)
-      if (tone < Math.random() * 0.85) continue
-      out.push({ x, y, tone })
+function sampleGrid(img: HTMLImageElement, w: number, h: number, baseStep: number, max: number): Grid | null {
+  const off = document.createElement('canvas')
+  const ctx = off.getContext('2d', { willReadFrequently: true })
+  if (!ctx) return null
+
+  let step = baseStep
+  for (;;) {
+    const cols = Math.max(1, Math.ceil(w / step))
+    const rows = Math.max(1, Math.ceil(h / step))
+    off.width = cols
+    off.height = rows
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 0, cols, rows)
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
+    const scale = Math.max(cols / img.naturalWidth, rows / img.naturalHeight)
+    const dw = img.naturalWidth * scale
+    const dh = img.naturalHeight * scale
+    ctx.drawImage(img, (cols - dw) / 2, rows - dh, dw, dh)
+    const data = ctx.getImageData(0, 0, cols, rows).data
+
+    // Luminancia por celda y percentil 90 de las celdas visibles para normalizar el rango tonal.
+    const lum = new Float32Array(cols * rows)
+    const histogram = new Uint32Array(256)
+    let lit = 0
+    for (let i = 0; i < lum.length; i++) {
+      const v = (0.2126 * data[i * 4] + 0.7152 * data[i * 4 + 1] + 0.0722 * data[i * 4 + 2]) / 255
+      lum[i] = v
+      if (v >= BRIGHTNESS_MIN) {
+        histogram[Math.min(255, Math.round(v * 255))]++
+        lit++
+      }
     }
+    if (lit > max && step < baseStep * 2.5) {
+      step += 0.5
+      continue
+    }
+
+    let acc = 0
+    let peak = 1
+    for (let v = 255; v >= 0; v--) {
+      acc += histogram[v]
+      if (acc >= lit * 0.1) {
+        peak = Math.max(v / 255, 0.3)
+        break
+      }
+    }
+
+    const rand = mulberry32(0x5eed)
+    const pos = new Float32Array(lit * 4)
+    const attr = new Float32Array(lit * 4)
+    let n = 0
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const v = lum[r * cols + c]
+        if (v < BRIGHTNESS_MIN) continue
+        const x = (c + 0.5) * step
+        const y = (r + 0.5) * step
+        const k = n * 4
+        pos[k] = x
+        pos[k + 1] = y
+        pos[k + 2] = rand() * w
+        pos[k + 3] = rand() * h
+        const roll = rand()
+        attr[k] = Math.pow(Math.min(1, v / peak), 0.85)
+        attr[k + 1] = rand()
+        attr[k + 2] = roll < CRIMSON_CHANCE ? 2 : roll < CRIMSON_CHANCE + GOLD_CHANCE ? 1 : 0
+        // El retardo mezcla azar y altura: la imagen se arma de forma ligeramente descendente.
+        attr[k + 3] = rand() * 0.6 + (y / h) * 0.4
+        n++
+      }
+    }
+    return { count: n, step, pos, attr }
   }
-  return out
 }
 
-function buildField(img: HTMLImageElement, w: number, h: number, target: number): Field | null {
-  const W = Math.max(1, Math.round(w))
-  const H = Math.max(1, Math.round(h))
-  const data = readPixels(img, W, H)
-  if (!data) return null
+/* ───────────────────────── WebGL ───────────────────────── */
 
-  // Normaliza el brillo por el percentil 98 para aprovechar todo el rango tonal.
-  const histogram = new Uint32Array(256)
-  let total = 0
-  for (let i = 0; i < data.length; i += 16) {
-    histogram[data[i]]++
-    total++
+function compile(gl: WebGL2RenderingContext, type: number, src: string): WebGLShader | null {
+  const shader = gl.createShader(type)
+  if (!shader) return null
+  gl.shaderSource(shader, src)
+  gl.compileShader(shader)
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    gl.deleteShader(shader)
+    return null
   }
-  let acc = 0
-  let peak = 255
-  for (let v = 255; v >= 0; v--) {
-    acc += histogram[v]
-    if (acc >= total * 0.02) {
-      peak = Math.max(v, 64)
-      break
-    }
-  }
-  const norm = 255 / peak
-
-  // Densidad adaptativa: sube el paso de muestreo hasta quedar bajo el objetivo.
-  let step = 2
-  let samples = sampleTones(data, W, H, step, norm)
-  while (samples.length > target) {
-    step++
-    samples = sampleTones(data, W, H, step, norm)
-  }
-
-  const count = samples.length
-  const field: Field = {
-    count,
-    homeX: new Float32Array(count),
-    homeY: new Float32Array(count),
-    x: new Float32Array(count),
-    y: new Float32Array(count),
-    vx: new Float32Array(count),
-    vy: new Float32Array(count),
-    size: new Float32Array(count),
-    alpha: new Float32Array(count),
-    delay: new Float32Array(count),
-    color: new Uint8Array(count),
-  }
-
-  for (let i = 0; i < count; i++) {
-    const { x, y, tone } = samples[i]
-    // Pequeña dispersión dentro de la celda para un aspecto orgánico.
-    field.homeX[i] = x + Math.random() * step
-    field.homeY[i] = y + Math.random() * step
-    field.x[i] = Math.random() * W
-    field.y[i] = Math.random() * H
-    field.size[i] = 0.6 + tone * 1.9
-    field.alpha[i] = 0.35 + tone * 0.65
-    field.delay[i] = Math.random() * ENTRY_SPREAD_MS
-    field.color[i] = Math.random() < ACCENT_CHANCE ? 1 + Math.floor(Math.random() * 2) : 0
-  }
-  return field
+  return shader
 }
 
-function draw(
-  ctx: CanvasRenderingContext2D,
-  field: Field,
-  w: number,
-  h: number,
-  elapsed: number,
-): void {
-  ctx.clearRect(0, 0, w, h)
-  for (let c = 0; c < COLORS.length; c++) {
-    ctx.fillStyle = COLORS[c]
-    for (let i = 0; i < field.count; i++) {
-      if (field.color[i] !== c) continue
-      const appear = Math.min(1, Math.max(0, (elapsed - field.delay[i]) / ENTRY_FADE_MS))
-      if (appear === 0) continue
-      ctx.globalAlpha = field.alpha[i] * appear
-      const s = field.size[i]
-      ctx.fillRect(field.x[i] - s / 2, field.y[i] - s / 2, s, s)
-    }
-  }
-  ctx.globalAlpha = 1
+const UNIFORMS = [
+  'u_res',
+  'u_dpr',
+  'u_step',
+  'u_time',
+  'u_progress',
+  'u_motion',
+  'u_pointer',
+  'u_strength',
+  'u_radius',
+  'u_palette',
+] as const
+
+type Uniforms = Record<(typeof UNIFORMS)[number], WebGLUniformLocation | null>
+
+interface Renderer {
+  upload: (grid: Grid) => void
+  resize: (w: number, h: number, dpr: number) => void
+  draw: (s: FrameState) => void
+  dispose: () => void
 }
+
+interface FrameState {
+  time: number
+  progress: number
+  motion: number
+  pointerX: number
+  pointerY: number
+  strength: number
+}
+
+function createRenderer(gl: WebGL2RenderingContext): Renderer | null {
+  const vs = compile(gl, gl.VERTEX_SHADER, VERTEX)
+  const fs = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT)
+  const program = gl.createProgram()
+  if (!vs || !fs || !program) return null
+  gl.attachShader(program, vs)
+  gl.attachShader(program, fs)
+  gl.bindAttribLocation(program, 0, 'a_pos')
+  gl.bindAttribLocation(program, 1, 'a_attr')
+  gl.linkProgram(program)
+  gl.deleteShader(vs)
+  gl.deleteShader(fs)
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    gl.deleteProgram(program)
+    return null
+  }
+
+  const uniforms = {} as Uniforms
+  for (const name of UNIFORMS) uniforms[name] = gl.getUniformLocation(program, name)
+
+  const vao = gl.createVertexArray()
+  const posBuf = gl.createBuffer()
+  const attrBuf = gl.createBuffer()
+  gl.bindVertexArray(vao)
+  gl.bindBuffer(gl.ARRAY_BUFFER, posBuf)
+  gl.enableVertexAttribArray(0)
+  gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0)
+  gl.bindBuffer(gl.ARRAY_BUFFER, attrBuf)
+  gl.enableVertexAttribArray(1)
+  gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 0, 0)
+  gl.bindVertexArray(null)
+
+  gl.useProgram(program)
+  gl.uniform3fv(uniforms.u_palette, PALETTE)
+  gl.enable(gl.BLEND)
+  gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA) // salida con alfa premultiplicado
+  gl.clearColor(0, 0, 0, 0)
+
+  let count = 0
+  let step = STEP_DESKTOP
+
+  return {
+    upload(grid) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, posBuf)
+      gl.bufferData(gl.ARRAY_BUFFER, grid.pos, gl.STATIC_DRAW)
+      gl.bindBuffer(gl.ARRAY_BUFFER, attrBuf)
+      gl.bufferData(gl.ARRAY_BUFFER, grid.attr, gl.STATIC_DRAW)
+      count = grid.count
+      step = grid.step
+    },
+    resize(w, h, dpr) {
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
+      gl.uniform2f(uniforms.u_res, w, h)
+      gl.uniform1f(uniforms.u_dpr, dpr)
+    },
+    draw(s) {
+      gl.clear(gl.COLOR_BUFFER_BIT)
+      gl.uniform1f(uniforms.u_step, step)
+      gl.uniform1f(uniforms.u_time, s.time)
+      gl.uniform1f(uniforms.u_progress, s.progress)
+      gl.uniform1f(uniforms.u_motion, s.motion)
+      gl.uniform2f(uniforms.u_pointer, s.pointerX, s.pointerY)
+      gl.uniform1f(uniforms.u_strength, s.strength)
+      gl.uniform1f(uniforms.u_radius, POINTER_RADIUS)
+      gl.bindVertexArray(vao)
+      gl.drawArrays(gl.POINTS, 0, count)
+      gl.bindVertexArray(null)
+    },
+    dispose() {
+      gl.deleteBuffer(posBuf)
+      gl.deleteBuffer(attrBuf)
+      gl.deleteVertexArray(vao)
+      gl.deleteProgram(program)
+      gl.getExtension('WEBGL_lose_context')?.loseContext()
+    },
+  }
+}
+
+/* ───────────────────────── Componente ───────────────────────── */
 
 interface ParticlePortraitProps {
   className?: string
@@ -166,38 +311,66 @@ export function ParticlePortrait({ className }: ParticlePortraitProps) {
   const { profile, ui } = portfolioData
   const reduce = useReducedMotion()
   const wrapRef = useRef<HTMLDivElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const holderRef = useRef<HTMLDivElement>(null)
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
-    const wrap = wrapRef.current
-    const canvas = canvasRef.current
-    if (!wrap || !canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const wrapEl = wrapRef.current
+    const holder = holderRef.current
+    if (!wrapEl || !holder) return
+    const wrap: HTMLDivElement = wrapEl
+
+    const canvas = document.createElement('canvas')
+    canvas.setAttribute('aria-hidden', 'true')
+    canvas.className = 'absolute inset-0 h-full w-full'
+    holder.appendChild(canvas)
+    let renderer: Renderer | null = null
 
     const isMobile = window.matchMedia('(max-width: 767px), (pointer: coarse)').matches
-    const target = isMobile ? TARGET_MOBILE : TARGET_DESKTOP
+    const baseStep = isMobile ? STEP_MOBILE : STEP_DESKTOP
+    const maxCount = isMobile ? MAX_MOBILE : MAX_DESKTOP
     const animated = !reduce
 
     const life = {
       cancelled: false,
-      resizeTimer: 0,
       img: null as HTMLImageElement | null,
-      field: null as Field | null,
+      image: null as HTMLImageElement | null,
       w: 0,
       h: 0,
+      dpr: 1,
+      ready: false,
+      disposed: false,
+      inView: false,
+      formedAt: -1,
       raf: 0,
       last: 0,
-      startedAt: 0,
-      formed: false,
-      inView: false,
-      pointerX: -1e4,
-      pointerY: -1e4,
-      pointerActive: false,
+      resizeTimer: 0,
+      // Puntero suavizado (JS) y su intensidad con muelle: el shader solo recibe uniforms.
+      targetX: 0,
+      targetY: 0,
+      px: -1e4,
+      py: -1e4,
+      pointerOn: false,
+      strength: 0,
+      strengthV: 0,
     }
 
     const isActive = () => life.inView && !document.hidden
+
+    const render = (now: number) => {
+      if (!renderer) return
+      const progress = animated
+        ? Math.min(1, Math.max(0, (now - life.formedAt) / ENTRY_MS))
+        : 1
+      renderer.draw({
+        time: (now / 1000) % 1000,
+        progress,
+        motion: animated ? 1 : 0,
+        pointerX: life.px,
+        pointerY: life.py,
+        strength: animated ? life.strength : 0,
+      })
+    }
 
     const stop = () => {
       if (life.raf) cancelAnimationFrame(life.raf)
@@ -206,110 +379,57 @@ export function ParticlePortrait({ className }: ParticlePortraitProps) {
 
     const tick = (now: number) => {
       life.raf = 0
-      const field = life.field
-      if (!field || !life.formed || !isActive()) return
-      const dt = Math.min((now - life.last) / 16.667, 2.5)
+      if (!life.ready || !isActive()) return
+      const dt = Math.min((now - life.last) / 16.667, 3)
       life.last = now
-      const elapsed = now - life.startedAt
-      const radius = Math.min(130, Math.max(70, Math.min(life.w, life.h) * 0.2))
-      const r2 = radius * radius
-      const damp = Math.pow(DAMPING, dt)
-      let moving = elapsed < ENTRY_SPREAD_MS + ENTRY_FADE_MS
 
-      for (let i = 0; i < field.count; i++) {
-        if (elapsed < field.delay[i]) continue
-        let vx = field.vx[i]
-        let vy = field.vy[i]
-        let x = field.x[i]
-        let y = field.y[i]
-        const ex = field.homeX[i] - x
-        const ey = field.homeY[i] - y
-        vx += ex * SPRING * dt
-        vy += ey * SPRING * dt
+      // La posición sigue al puntero con suavizado; la intensidad es un muelle (rebota al soltar).
+      const follow = 1 - Math.pow(0.78, dt)
+      life.px += (life.targetX - life.px) * follow
+      life.py += (life.targetY - life.py) * follow
+      const goal = life.pointerOn ? 1 : 0
+      life.strengthV += (goal - life.strength) * 0.09 * dt
+      life.strengthV *= Math.pow(0.84, dt)
+      life.strength += life.strengthV * dt
 
-        if (life.pointerActive) {
-          const dx = x - life.pointerX
-          const dy = y - life.pointerY
-          const d2 = dx * dx + dy * dy
-          if (d2 < r2 && d2 > 0.01) {
-            const d = Math.sqrt(d2)
-            const k = 1 - d / radius
-            const push = k * k * REPEL_STRENGTH * dt
-            vx += (dx / d) * push * 6
-            vy += (dy / d) * push * 6
-          }
-        }
-
-        vx *= damp
-        vy *= damp
-        x += vx * dt
-        y += vy * dt
-        field.vx[i] = vx
-        field.vy[i] = vy
-        field.x[i] = x
-        field.y[i] = y
-        if (
-          Math.abs(ex) > REST_EPSILON ||
-          Math.abs(ey) > REST_EPSILON ||
-          Math.abs(vx) > REST_EPSILON ||
-          Math.abs(vy) > REST_EPSILON
-        ) {
-          moving = true
-        }
-      }
-
-      draw(ctx, field, life.w, life.h, elapsed)
-      // Si todo está en reposo y no hay puntero, se detiene el bucle hasta nueva interacción.
-      if (moving || life.pointerActive) life.raf = requestAnimationFrame(tick)
+      render(now)
+      life.raf = requestAnimationFrame(tick)
     }
 
     const wake = () => {
-      if (life.raf || !life.field || !life.formed || !isActive()) return
+      if (life.raf || !life.ready || !animated || !isActive()) return
       life.last = performance.now()
       life.raf = requestAnimationFrame(tick)
     }
 
-    const drawStatic = () => {
-      if (!life.field) return
-      for (let i = 0; i < life.field.count; i++) {
-        life.field.x[i] = life.field.homeX[i]
-        life.field.y[i] = life.field.homeY[i]
-      }
-      draw(ctx, life.field, life.w, life.h, Number.POSITIVE_INFINITY)
-    }
-
     const rebuild = () => {
-      if (!life.img) return
+      const img = life.img
+      if (!img || !renderer || life.cancelled) return
       const rect = wrap.getBoundingClientRect()
       if (rect.width < 2 || rect.height < 2) return
+      const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR)
+      if (life.ready && rect.width === life.w && rect.height === life.h && dpr === life.dpr) return
       life.w = rect.width
       life.h = rect.height
-      const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR)
-      canvas.width = Math.round(life.w * dpr)
-      canvas.height = Math.round(life.h * dpr)
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      life.field = buildField(life.img, life.w, life.h, target)
-      if (!life.field) return
-      if (!animated) {
-        drawStatic()
+      life.dpr = dpr
+      canvas.width = Math.max(1, Math.round(life.w * dpr))
+      canvas.height = Math.max(1, Math.round(life.h * dpr))
+      const grid = sampleGrid(img, life.w, life.h, baseStep, maxCount)
+      if (!grid) {
+        fail()
         return
       }
-      if (life.formed) {
-        // Tras un resize las partículas nacen ya formadas, sin repetir la entrada.
-        for (let i = 0; i < life.field.count; i++) {
-          life.field.x[i] = life.field.homeX[i]
-          life.field.y[i] = life.field.homeY[i]
-          life.field.delay[i] = 0
-        }
-        life.startedAt = -ENTRY_SPREAD_MS - ENTRY_FADE_MS
-        draw(ctx, life.field, life.w, life.h, Number.POSITIVE_INFINITY)
-        wake()
-      }
+      renderer.resize(life.w, life.h, dpr)
+      renderer.upload(grid)
+      life.ready = true
+      if (!animated) render(0) // reduced-motion: un solo frame con la rejilla formada
+      else if (life.formedAt >= 0) render(performance.now())
+      wake()
     }
 
     const ro = new ResizeObserver(() => {
       window.clearTimeout(life.resizeTimer)
-      life.resizeTimer = window.setTimeout(rebuild, 120)
+      life.resizeTimer = window.setTimeout(rebuild, RESIZE_DEBOUNCE_MS)
     })
 
     let io: IntersectionObserver | null = null
@@ -317,55 +437,31 @@ export function ParticlePortrait({ className }: ParticlePortraitProps) {
 
     const toLocal = (e: PointerEvent) => {
       const rect = wrap.getBoundingClientRect()
-      life.pointerX = e.clientX - rect.left
-      life.pointerY = e.clientY - rect.top
+      life.targetX = e.clientX - rect.left
+      life.targetY = e.clientY - rect.top
     }
     const onPointerMove = (e: PointerEvent) => {
       toLocal(e)
-      life.pointerActive = true
+      if (!life.pointerOn) {
+        life.px = life.targetX
+        life.py = life.targetY
+        life.pointerOn = true
+      }
       wake()
     }
     const onPointerLeave = () => {
-      life.pointerActive = false
-      life.pointerX = life.pointerY = -1e4
-      wake()
+      life.pointerOn = false
     }
 
-    const image = new Image()
-    image.decoding = 'async'
-    image.onload = () => {
-      if (life.cancelled) return
-      life.img = image
-      rebuild()
-      ro.observe(wrap)
-      if (!animated) return
-
-      io = new IntersectionObserver(
-        ([entry]) => {
-          life.inView = entry.isIntersecting
-          if (life.inView && !life.formed) {
-            life.formed = true
-            life.startedAt = performance.now()
-          }
-          if (life.inView) wake()
-          else stop()
-        },
-        { threshold: 0.25 },
-      )
-      io.observe(wrap)
-      document.addEventListener('visibilitychange', onVisibility)
-      wrap.addEventListener('pointermove', onPointerMove)
-      wrap.addEventListener('pointerdown', onPointerMove)
-      wrap.addEventListener('pointerleave', onPointerLeave)
-      wrap.addEventListener('pointercancel', onPointerLeave)
-      wrap.addEventListener('pointerup', onPointerLeave)
+    const onContextLost = (e: Event) => {
+      e.preventDefault()
+      fail()
     }
-    image.onerror = () => {
-      if (!life.cancelled) setFailed(true)
-    }
-    image.src = profile.portraitParticles
+    canvas.addEventListener('webglcontextlost', onContextLost)
 
-    return () => {
+    function dispose() {
+      if (life.disposed) return
+      life.disposed = true
       life.cancelled = true
       stop()
       window.clearTimeout(life.resizeTimer)
@@ -377,9 +473,78 @@ export function ParticlePortrait({ className }: ParticlePortraitProps) {
       wrap.removeEventListener('pointerleave', onPointerLeave)
       wrap.removeEventListener('pointercancel', onPointerLeave)
       wrap.removeEventListener('pointerup', onPointerLeave)
-      image.onload = null
-      image.onerror = null
+      canvas.removeEventListener('webglcontextlost', onContextLost)
+      renderer?.dispose()
+      canvas.remove()
+      if (life.image) {
+        life.image.onload = null
+        life.image.onerror = null
+      }
+      pre?.disconnect()
     }
+    function fail() {
+      dispose()
+      setFailed(true)
+    }
+
+    let pre: IntersectionObserver | null = null
+    const start = () => {
+      const img = new Image()
+      life.image = img
+      img.decoding = 'async'
+      img.onload = () => {
+        if (life.cancelled) return
+        const gl = canvas.getContext('webgl2', { antialias: false, alpha: true, premultipliedAlpha: true })
+        renderer = gl ? createRenderer(gl) : null
+        if (!renderer) {
+          fail()
+          return
+        }
+        life.img = img
+        rebuild()
+        if (!life.ready) return
+        ro.observe(wrap)
+        if (!animated) return
+
+        io = new IntersectionObserver(
+          ([entry]) => {
+            life.inView = entry.isIntersecting
+            if (life.inView) {
+              if (life.formedAt < 0) life.formedAt = performance.now()
+              wake()
+            } else {
+              stop()
+            }
+          },
+          { threshold: 0.25 },
+        )
+        io.observe(wrap)
+        document.addEventListener('visibilitychange', onVisibility)
+        wrap.addEventListener('pointermove', onPointerMove)
+        wrap.addEventListener('pointerdown', onPointerMove)
+        wrap.addEventListener('pointerleave', onPointerLeave)
+        wrap.addEventListener('pointercancel', onPointerLeave)
+        wrap.addEventListener('pointerup', onPointerLeave)
+      }
+      img.onerror = () => {
+        if (!life.cancelled) fail()
+      }
+      img.src = profile.portraitParticles
+    }
+
+    // La imagen, el contexto WebGL y la rejilla se preparan solo cuando la sección está cerca
+    // del viewport, para no competir con la carga inicial.
+    pre = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        pre?.disconnect()
+        start()
+      },
+      { rootMargin: '400px 0px' },
+    )
+    pre.observe(wrap)
+
+    return dispose
   }, [reduce, profile.portraitParticles])
 
   return (
@@ -387,18 +552,17 @@ export function ParticlePortrait({ className }: ParticlePortraitProps) {
       ref={wrapRef}
       role="img"
       aria-label={ui.about.portraitAria}
-      className={cn('relative h-full w-full touch-pan-y', className)}
+      className={cn('absolute inset-0 touch-pan-y', className)}
     >
-      {failed ? (
+      <div ref={holderRef} className="absolute inset-0" />
+      {failed && (
         <img
           src={profile.portrait}
           alt=""
           loading="lazy"
           decoding="async"
-          className="absolute inset-0 h-full w-full object-cover object-top"
+          className="absolute inset-0 h-full w-full object-cover object-bottom [filter:grayscale(0.7)]"
         />
-      ) : (
-        <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 h-full w-full" />
       )}
     </div>
   )

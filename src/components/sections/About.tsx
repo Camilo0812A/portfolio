@@ -58,7 +58,7 @@ export function About() {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {/* A: retrato de partículas */}
-          <Card index={0} className="h-[420px] md:col-span-2 md:h-[520px] lg:row-span-2 lg:h-auto lg:min-h-[560px]">
+          <Card index={0} className="aspect-square md:col-span-2 lg:aspect-auto lg:row-span-2 lg:min-h-[560px]">
             <ParticlePortrait />
             <p className="pointer-events-none absolute inset-x-0 bottom-0 px-6 pb-5 font-mono text-[11px] uppercase tracking-[0.3em] text-muted">
               {about.portraitCaption}
