@@ -152,7 +152,7 @@ export const portfolioData: PortfolioData = {
       ],
       role: 'Definí el producto, las plantillas y las reglas de cada prompt, y lo construí por fases con Claude Code como asistente de desarrollo: dirigí, revisé y aprobé cada fase.',
       tech: ['Astro', 'TypeScript', 'Vitest', 'Playwright', 'Cloudflare Pages'],
-      liveUrl: 'https://promptazo.pages.dev',
+      liveUrl: 'https://promptazo.kodce.com',
       image: '/images/projects/promptazo.webp',
       featured: true,
       isPrivate: true,
