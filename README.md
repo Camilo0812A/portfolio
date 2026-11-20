@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://dcportafolio.vercel.app">Ver sitio</a> ·
+  <a href="https://dcportafolio.kodce.com">Ver sitio</a> ·
   <a href="https://www.linkedin.com/in/camilo-colmenares-7b96a6281">LinkedIn</a> ·
   <a href="https://github.com/Camilo0812A">GitHub</a> ·
   <a href="mailto:dcolmenaresh1@gmail.com">Correo</a>
@@ -22,7 +22,7 @@
   <img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind%20CSS-16120f?style=flat-square&logo=tailwindcss&logoColor=c8a24a">
   <img alt="Motion" src="https://img.shields.io/badge/Motion-16120f?style=flat-square&logo=framer&logoColor=c8a24a">
   <img alt="WebGL2" src="https://img.shields.io/badge/WebGL2-16120f?style=flat-square&logo=webgl&logoColor=c8a24a">
-  <img alt="Vercel" src="https://img.shields.io/badge/Vercel-16120f?style=flat-square&logo=vercel&logoColor=c8a24a">
+  <img alt="Cloudflare Pages" src="https://img.shields.io/badge/Cloudflare%20Pages-16120f?style=flat-square&logo=cloudflarepages&logoColor=c8a24a">
   <br>
   <img alt="Lighthouse Performance 99-100" src="https://img.shields.io/badge/Performance-99%E2%80%93100-c8a24a?style=flat-square&labelColor=16120f&logo=lighthouse&logoColor=c8a24a">
   <img alt="Lighthouse Accessibility 100" src="https://img.shields.io/badge/Accessibility-100-c8a24a?style=flat-square&labelColor=16120f">
@@ -100,7 +100,7 @@ Medido con Lighthouse sobre la compilación de producción (`npm run build` + `n
 | WebGL2 | Retrato de partículas |
 | Lucide | Iconos |
 | Oxlint | Linter |
-| Vercel | Despliegue |
+| Cloudflare Pages | Despliegue |
 
 ## Estructura del proyecto
 
